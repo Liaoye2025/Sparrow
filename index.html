@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻雀 - 记者同行评议平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #0a0a0f;
+                color: #e4e4e7;
+            }
+            h1, h2, h3, .serif {
+                font-family: 'Noto Serif SC', serif;
+            }
+        }
+        @layer components {
+            .glass {
+                background: rgba(255, 255, 255, 0.03);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.06);
+            }
+            .glass-hover:hover {
+                background: rgba(255, 255, 255, 0.06);
+                border-color: rgba(255, 255, 255, 0.12);
+            }
+            .score-bar {
+                background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                    <span class="text-white font-bold text-lg serif">评</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white serif">麻雀</h1>
+                    <p class="text-xs text-zinc-500">记者同行评议平台</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="showPage('home')" class="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors">首页</button>
+                <button onclick="showPage('submit')" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm rounded-lg transition-colors">
+                    + 提交文章
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 首页 -->
+    <div id="page-home" class="page pt-24 pb-12 px-4">
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero -->
+            <div class="text-center mb-12">
+                <div class="text-6xl mb-4">🐦</div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-4 serif">
+                    麻雀虽小，五脏俱全
+                </h2>
+                <p class="text-zinc-400 text-lg max-w-2xl mx-auto">
+                    记者同行的匿名评议平台。喳喳见真章，一起剥开报道的内核
+                </p>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
+                <div class="glass rounded-xl p-6 text-center">
+                    <div class="text-3xl font-bold text-amber-500 mb-1" id="stat-articles">0</div>
+                    <div class="text-sm text-zinc-500">已收录文章</div>
+                </div>
+                <div class="glass rounded-xl p-6 text-center">
+                    <div class="text-3xl font-bold text-emerald-500 mb-1" id="stat-reviews">0</div>
+                    <div class="text-sm text-zinc-500">同行评议</div>
+                </div>
+                <div class="glass rounded-xl p-6 text-center">
+                    <div class="text-3xl font-bold text-blue-500 mb-1" id="stat-today">0</div>
+                    <div class="text-sm text-zinc-500">今日新增</div>
+                </div>
+                <div class="glass rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-1">🐦</div>
+                    <div class="text-sm text-zinc-500">叽叽喳喳</div>
+                </div>
+            </div>
+
+            <!-- 文章列表 -->
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-white serif">最新喳喳</h3>
+                <select id="sort-select" onchange="loadArticles()" class="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-lg px-3 py-2">
+                    <option value="newest">最新发布</option>
+                    <option value="highest">评分最高</option>
+                    <option value="most-reviewed">评价最多</option>
+                </select>
+            </div>
+
+            <div id="articles-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- 提交文章页 -->
+    <div id="page-submit" class="page hidden pt-24 pb-12 px-4">
+        <div class="max-w-2xl mx-auto">
+            <div class="glass rounded-2xl p-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="text-3xl">🐦</span>
+                    <h2 class="text-2xl font-bold text-white serif">提交新闻文章</h2>
+                </div>
+                <form id="submit-form" onsubmit="handleSubmit(event)">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm text-zinc-400 mb-2">文章标题 *</label>
+                            <input type="text" id="article-title" required
+                                class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-600 transition-colors"
+                                placeholder="请输入文章标题">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-zinc-400 mb-2">原文链接 *</label>
+                            <input type="url" id="article-url" required
+                                class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-600 transition-colors"
+                                placeholder="https://...">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-zinc-400 mb-2">媒体名称 *</label>
+                                <input type="text" id="article-source" required
+                                    class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-600 transition-colors"
+                                    placeholder="如：新京报、澎湃新闻">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-zinc-400 mb-2">发布日期</label>
+                                <input type="date" id="article-date"
+                                    class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-amber-600 transition-colors">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-zinc-400 mb-2">文章分类</label>
+                            <select id="article-category"
+                                class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-amber-600 transition-colors">
+                                <option value="时政">时政</option>
+                                <option value="社会">社会</option>
+                                <option value="经济">经济</option>
+                                <option value="国际">国际</option>
+                                <option value="科技">科技</option>
+                                <option value="文化">文化</option>
+                                <option value="调查报道">调查报道</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-zinc-400 mb-2">摘要（可选）</label>
+                            <textarea id="article-summary" rows="3"
+                                class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-600 transition-colors resize-none"
+                                placeholder="简要概括文章内容..."></textarea>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" 
+                                class="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-medium py-3 rounded-lg transition-all">
+                                提交文章
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评分页面 -->
+    <div id="page-review" class="page hidden pt-24 pb-12 px-4">
+        <div class="max-w-3xl mx-auto">
+            <div id="review-article-info" class="glass rounded-xl p-6 mb-6"></div>
+
+            <div class="glass rounded-2xl p-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="text-2xl">🐦</span>
+                    <h3 class="text-xl font-bold text-white serif">麻雀评议</h3>
+                </div>
+                <form id="review-form" onsubmit="handleReview(event)">
+                    <input type="hidden" id="review-article-id">
+                    
+                    <div class="space-y-6">
+                        <div class="space-y-4">
+                            ${['accuracy:事实准确性', 'completeness:信息完整性', 'objectivity:客观公正性', 'timeliness:时效性', 'writing:写作质量', 'value:社会价值'].map(item => {
+                                const [key, label] = item.split(':');
+                                return `
+                                <div class="rating-item">
+                                    <div class="flex justify-between mb-2">
+                                        <label class="text-sm text-zinc-300">${label}</label>
+                                        <span class="text-sm text-amber-500 font-medium" id="score-${key}-display">5.0</span>
+                                    </div>
+                                    <input type="range" id="score-${key}" min="1" max="10" step="0.5" value="5"
+                                        class="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer score-bar"
+                                        oninput="updateScoreDisplay('${key}')">
+                                </div>`;
+                            }).join('')}
+                        </div>
+
+                        <div class="border-t border-zinc-800 pt-6">
+                            <div class="flex items-center justify-between">
+                                <span class="text-zinc-400">综合评分</span>
+                                <span class="text-3xl font-bold text-amber-500" id="overall-score">5.0</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-zinc-400 mb-2">专业点评（可选）</label>
+                            <textarea id="review-comment" rows="4"
+                                class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-600 transition-colors resize-none"
+                                placeholder="分享您的专业见解，指出文章的优点或不足..."></textarea>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" 
+                                class="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-medium py-3 rounded-lg transition-all">
+                                提交评议 🐦
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文章详情页 -->
+    <div id="page-detail" class="page hidden pt-24 pb-12 px-4">
+        <div class="max-w-4xl mx-auto" id="detail-content"></div>
+    </div>
+
+    <script>
+        // 数据存储
+        const DB = {
+            getArticles: () => JSON.parse(localStorage.getItem('sparrow_articles') || '[]'),
+            setArticles: (data) => localStorage.setItem('sparrow_articles', JSON.stringify(data)),
+            getReviews: () => JSON.parse(localStorage.getItem('sparrow_reviews') || '[]'),
+            setReviews: (data) => localStorage.setItem('sparrow_reviews', JSON.stringify(data)),
+            getUserId: () => {
+                let id = localStorage.getItem('sparrow_user_id');
+                if (!id) {
+                    id = 'sparrow_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('sparrow_user_id', id);
+                }
+                return id;
+            }
+        };
+
+        // 页面切换
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${pageName}`).classList.remove('hidden');
+            window.scrollTo(0, 0);
+            if (pageName === 'home') { loadArticles(); updateStats(); }
+        }
+
+        // 更新统计
+        function updateStats() {
+            const articles = DB.getArticles();
+            const reviews = DB.getReviews();
+            const today = new Date().toDateString();
+            document.getElementById('stat-articles').textContent = articles.length;
+            document.getElementById('stat-reviews').textContent = reviews.length;
+            document.getElementById('stat-today').textContent = articles.filter(a => new Date(a.createdAt).toDateString() === today).length;
+        }
+
+        // 获取评分颜色
+        function getScoreColor(score) {
+            const s = parseFloat(score);
+            if (s >= 8) return 'text-emerald-500';
+            if (s >= 6) return 'text-amber-500';
+            if (s >= 4) return 'text-orange-500';
+            return 'text-red-500';
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const days = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            if (days === 0) return '今天';
+            if (days === 1) return '昨天';
+            if (days < 7) return days + '天前';
+            return (date.getMonth() + 1) + '月' + date.getDate() + '日';
+        }
+
+        // 加载文章列表
+        function loadArticles() {
+            const articles = DB.getArticles();
+            const reviews = DB.getReviews();
+            const sortType = document.getElementById('sort-select').value;
+            
+            articles.forEach(article => {
+                const articleReviews = reviews.filter(r => r.articleId === article.id);
+                article.avgScore = articleReviews.length > 0 ? (articleReviews.reduce((s, r) => s + r.overall, 0) / articleReviews.length).toFixed(1) : '0.0';
+                article.reviewCount = articleReviews.length;
+            });
+            
+            if (sortType === 'newest') articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            else if (sortType === 'highest') articles.sort((a, b) => parseFloat(b.avgScore) - parseFloat(a.avgScore));
+            else if (sortType === 'most-reviewed') articles.sort((a, b) => b.reviewCount - a.reviewCount);
+            
+            const container = document.getElementById('articles-list');
+            if (articles.length === 0) {
+                container.innerHTML = '<div class="text-center py-16"><div class="text-6xl mb-4">🐦</div><p class="text-zinc-500">暂无文章，成为第一只麻雀吧</p><button onclick="showPage(\'submit\')" class="mt-4 text-amber-500 hover:text-amber-400">提交文章 →</button></div>';
+                return;
+            }
+            
+            container.innerHTML = articles.map(article => `
+                <div class="glass rounded-xl p-6 glass-hover transition-all cursor-pointer" onclick="showDetail('${article.id}')">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs rounded">${article.category}</span>
+                                <span class="text-zinc-500 text-sm">${article.source}</span>
+                                <span class="text-zinc-600 text-sm">·</span>
+                                <span class="text-zinc-500 text-sm">${formatDate(article.createdAt)}</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2 serif line-clamp-2">${article.title}</h3>
+                            ${article.summary ? `<p class="text-zinc-400 text-sm line-clamp-2 mb-3">${article.summary}</p>` : ''}
+                            <div class="flex items-center gap-4">
+                                <a href="${article.url}" target="_blank" onclick="event.stopPropagation()" class="text-amber-600 hover:text-amber-500 text-sm">阅读原文 ↗</a>
+                                <button onclick="event.stopPropagation(); startReview('${article.id}')" class="text-zinc-400 hover:text-white text-sm">我要评分</button>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold ${getScoreColor(article.avgScore)}">${article.avgScore}</div>
+                            <div class="text-xs text-zinc-500 mt-1">${article.reviewCount} 人评价</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 提交文章
+        function handleSubmit(e) {
+            e.preventDefault();
+            const article = {
+                id: 'art_' + Date.now(),
+                title: document.getElementById('article-title').value,
+                url: document.getElementById('article-url').value,
+                source: document.getElementById('article-source').value,
+                date: document.getElementById('article-date').value,
+                category: document.getElementById('article-category').value,
+                summary: document.getElementById('article-summary').value,
+                createdAt: new Date().toISOString(),
+                userId: DB.getUserId()
+            };
+            const articles = DB.getArticles();
+            articles.unshift(article);
+            DB.setArticles(articles);
+            document.getElementById('submit-form').reset();
+            alert('文章提交成功！');
+            showPage('home');
+        }
+
+        // 开始评分
+        function startReview(articleId) {
+            const article = DB.getArticles().find(a => a.id === articleId);
+            if (!article) return;
+            document.getElementById('review-article-id').value = articleId;
+            document.getElementById('review-article-info').innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs rounded">${article.category}</span>
+                        <h3 class="text-lg font-semibold text-white mt-2 serif">${article.title}</h3>
+                        <p class="text-zinc-500 text-sm mt-1">${article.source} · ${article.date || '未知日期'}</p>
+                    </div>
+                    <a href="${article.url}" target="_blank" class="text-amber-600 hover:text-amber-500 text-sm">阅读原文 ↗</a>
+                </div>`;
+            ['accuracy', 'completeness', 'objectivity', 'timeliness', 'writing', 'value'].forEach(type => {
+                document.getElementById(`score-${type}`).value = 5;
+                updateScoreDisplay(type);
+            });
+            document.getElementById('review-comment').value = '';
+            showPage('review');
+        }
+
+        // 更新评分显示
+        function updateScoreDisplay(type) {
+            const value = document.getElementById(`score-${type}`).value;
+            document.getElementById(`score-${type}-display`).textContent = value;
+            const scores = ['accuracy', 'completeness', 'objectivity', 'timeliness', 'writing', 'value'].map(t => parseFloat(document.getElementById(`score-${t}`).value));
+            document.getElementById('overall-score').textContent = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+        }
+
+        // 提交评分
+        function handleReview(e) {
+            e.preventDefault();
+            const review = {
+                id: 'rev_' + Date.now(),
+                articleId: document.getElementById('review-article-id').value,
+                userId: DB.getUserId(),
+                scores: {
+                    accuracy: parseFloat(document.getElementById('score-accuracy').value),
+                    completeness: parseFloat(document.getElementById('score-completeness').value),
+                    objectivity: parseFloat(document.getElementById('score-objectivity').value),
+                    timeliness: parseFloat(document.getElementById('score-timeliness').value),
+                    writing: parseFloat(document.getElementById('score-writing').value),
+                    value: parseFloat(document.getElementById('score-value').value)
+                },
+                overall: parseFloat(document.getElementById('overall-score').textContent),
+                comment: document.getElementById('review-comment').value,
+                createdAt: new Date().toISOString()
+            };
+            const reviews = DB.getReviews();
+            reviews.unshift(review);
+            DB.setReviews(reviews);
+            alert('评分提交成功！感谢您的专业评价。');
+            showPage('home');
+        }
+
+        // 显示文章详情
+        function showDetail(articleId) {
+            const article = DB.getArticles().find(a => a.id === articleId);
+            const reviews = DB.getReviews().filter(r => r.articleId === articleId);
+            if (!article) return;
+            
+            const avgScores = reviews.length > 0 ? {
+                accuracy: (reviews.reduce((s, r) => s + r.scores.accuracy, 0) / reviews.length).toFixed(1),
+                completeness: (reviews.reduce((s, r) => s + r.scores.completeness, 0) / reviews.length).toFixed(1),
+                objectivity: (reviews.reduce((s, r) => s + r.scores.objectivity, 0) / reviews.length).toFixed(1),
+                timeliness: (reviews.reduce((s, r) => s + r.scores.timeliness, 0) / reviews.length).toFixed(1),
+                writing: (reviews.reduce((s, r) => s + r.scores.writing, 0) / reviews.length).toFixed(1),
+                value: (reviews.reduce((s, r) => s + r.scores.value, 0) / reviews.length).toFixed(1),
+                overall: (reviews.reduce((s, r) => s + r.overall, 0) / reviews.length).toFixed(1)
+            } : null;
+            
+            document.getElementById('detail-content').innerHTML = `
+                <div class="mb-6">
+                    <button onclick="showPage('home')" class="text-zinc-500 hover:text-white flex items-center gap-1">← 返回列表</button>
+                </div>
+                <div class="glass rounded-2xl p-8 mb-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs rounded">${article.category}</span>
+                        <span class="text-zinc-500 text-sm">${article.source}</span>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-white mb-4 serif">${article.title}</h1>
+                    ${article.summary ? `<p class="text-zinc-400 mb-6 leading-relaxed">${article.summary}</p>` : ''}
+                    <div class="flex items-center gap-4">
+                        <a href="${article.url}" target="_blank" class="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors">阅读原文</a>
+                        <button onclick="startReview('${article.id}')" class="px-6 py-2 border border-zinc-700 hover:border-zinc-500 text-zinc-300 rounded-lg transition-colors">我要评分</button>
+                    </div>
+                </div>
+                ${avgScores ? `
+                <div class="glass rounded-2xl p-8 mb-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-2xl">🐦</span>
+                        <h3 class="text-xl font-bold text-white serif">麻雀共识 (${reviews.length} 只麻雀)</h3>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+                        ${Object.entries({accuracy:'事实准确性',completeness:'信息完整性',objectivity:'客观公正性',timeliness:'时效性',writing:'写作质量',value:'社会价值'}).map(([k,l]) => `
+                        <div class="text-center p-4 bg-zinc-900/50 rounded-lg">
+                            <div class="text-2xl font-bold ${getScoreColor(avgScores[k])}">${avgScores[k]}</div>
+                            <div class="text-xs text-zinc-500 mt-1">${l}</div>
+                        </div>`).join('')}
+                    </div>
+                    <div class="border-t border-zinc-800 pt-6 text-center">
+                        <div class="text-sm text-zinc-500 mb-2">综合评分</div>
+                        <div class="text-5xl font-bold ${getScoreColor(avgScores.overall)}">${avgScores.overall}</div>
+                    </div>
+                </div>` : '<div class="glass rounded-2xl p-8 mb-6 text-center"><p class="text-zinc-500">暂无评分，成为第一个评价者吧</p><button onclick="startReview(\''+article.id+'\')" class="mt-4 text-amber-500 hover:text-amber-400">立即评分 →</button></div>'}
+                ${reviews.filter(r => r.comment).length > 0 ? `
+                <div class="glass rounded-2xl p-8 mb-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-2xl">🐦</span>
+                        <h3 class="text-xl font-bold text-white serif">叽叽喳喳</h3>
+                    </div>
+                    <div class="space-y-4">
+                        ${reviews.filter(r => r.comment).map(r => `
+                        <div class="p-4 bg-zinc-900/50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-amber-500 font-bold">${r.overall}分</span>
+                                <span class="text-zinc-600 text-sm">${formatDate(r.createdAt)}</span>
+                            </div>
+                            <p class="text-zinc-300 text-sm leading-relaxed">${r.comment}</p>
+                        </div>`).join('')}
+                    </div>
+                </div>` : ''}
+                
+                <!-- 业务探讨区 -->
+                <div class="glass rounded-2xl p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-2xl">🐦</span>
+                        <h3 class="text-xl font-bold text-white serif">剥花生</h3>
+                    </div>
+                    
+                    <!-- 发表讨论表单 -->
+                    <form onsubmit="handleDiscussion(event, '${article.id}')" class="mb-8">
+                        <textarea id="discussion-content" rows="3" 
+                            class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-600 transition-colors resize-none mb-3"
+                            placeholder="分享您的业务见解、写作技巧、采访经验..." required></textarea>
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-500 text-sm">匿名讨论，文明喳喳</span>
+                            <button type="submit" class="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors">发表喳喳 🐦</button>
+                        </div>
+                    </form>
+                    
+                    <!-- 讨论列表 -->
+                    <div id="discussions-list" class="space-y-4">
+                        <p class="text-zinc-500 text-center py-8">暂无讨论，做第一只剥花生的麻雀吧</p>
+                    </div>
+                </div>`;
+            showPage('detail');
+        }
+        
+        // 处理讨论提交
+        function handleDiscussion(e, articleId) {
+            e.preventDefault();
+            const content = document.getElementById('discussion-content').value;
+            alert('讨论发表成功！\n\n内容：' + content.substring(0, 50) + (content.length > 50 ? '...' : ''));
+            document.getElementById('discussion-content').value = '';
+        }
+
+        // 初始化默认文章
+        function initDefaultArticles() {
+            const existing = DB.getArticles();
+            if (existing.length === 0) {
+                const defaultArticles = [
+                    {
+                        id: 'art_default_1',
+                        title: '北京最后的粪桶',
+                        url: '',
+                        source: '中国青年报·冰点（原文已佚）',
+                        date: '1999-01-15',
+                        category: '特稿',
+                        summary: '记录北京城里最后一批背粪工人的生存状态，以平视视角书写底层劳动者。冰点周刊的开篇之作，定义了中国特稿的人文视角。',
+                        createdAt: '1999-01-15T00:00:00.000Z',
+                        userId: 'sparrow_system'
+                    },
+                    {
+                        id: 'art_default_2',
+                        title: '银广夏陷阱',
+                        url: 'https://baike.baidu.com/item/银广夏事件',
+                        source: '财经杂志（原文已下架，此为百科存档）',
+                        date: '2001-08-01',
+                        category: '调查报道',
+                        summary: '揭露上市公司银广夏财务造假，市值蒸发，投资者损失惨重。中国财经调查报道的标杆，记者顶住巨大压力发表。',
+                        createdAt: '2001-08-01T00:00:00.000Z',
+                        userId: 'sparrow_system'
+                    },
+                    {
+                        id: 'art_default_3',
+                        title: '被收容者孙志刚之死',
+                        url: 'https://baike.baidu.com/item/孙志刚事件',
+                        source: '南方周末（原文已下架，此为百科存档）',
+                        date: '2003-04-25',
+                        category: '调查报道',
+                        summary: '大学生孙志刚在广州被收容致死，报道引发全国关注，直接导致国务院废止《城市流浪乞讨人员收容遣送办法》。中国调查报道的里程碑。',
+                        createdAt: '2003-04-25T00:00:00.000Z',
+                        userId: 'sparrow_system'
+                    },
+                    {
+                        id: 'art_default_4',
+                        title: '举重冠军之死',
+                        url: 'https://baike.baidu.com/item/才力',
+                        source: '南方人物周刊（原文已下架，此为百科存档）',
+                        date: '2003-06-15',
+                        category: '特稿',
+                        summary: '前举重冠军才力退役后贫困潦倒，33岁病逝。报道揭开运动员退役后的生存困境。李海鹏代表作，中国特稿写作的美学巅峰。',
+                        createdAt: '2003-06-15T00:00:00.000Z',
+                        userId: 'sparrow_system'
+                    },
+                    {
+                        id: 'art_default_5',
+                        title: '聂树斌案：一个青年的死亡与复活',
+                        url: 'https://baike.baidu.com/item/聂树斌案',
+                        source: '新京报（原文已下架，此为百科存档）',
+                        date: '2015-04-28',
+                        category: '调查报道',
+                        summary: '聂树斌被执行死刑21年后，最高人民法院再审改判无罪。记录记者持续多年的追踪报道。平反冤案的标志性作品。',
+                        createdAt: '2015-04-28T00:00:00.000Z',
+                        userId: 'sparrow_system'
+                    },
+                    {
+                        id: 'art_default_6',
+                        title: '外卖骑手，困在系统里',
+                        url: 'https://baike.baidu.com/item/外卖骑手，困在系统里',
+                        source: '人物（原文已下架，此为百科存档）',
+                        date: '2020-09-08',
+                        category: '特稿',
+                        summary: '揭示外卖平台算法对骑手的压榨，引发全社会对平台经济、算法劳动的关注。中国非虚构写作的现象级作品，推动政策讨论。',
+                        createdAt: '2020-09-08T00:00:00.000Z',
+                        userId: 'sparrow_system'
+                    }
+                ];
+                DB.setArticles(defaultArticles);
+            }
+        }
+
+        // 初始化
+        document.getElementById('article-date').valueAsDate = new Date();
+        initDefaultArticles();
+        loadArticles();
+        updateStats();
+    </script>
+</body>
+</html>
